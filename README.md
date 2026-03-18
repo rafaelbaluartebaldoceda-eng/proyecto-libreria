@@ -18,7 +18,8 @@ Sistema de gestión de librería desarrollado en Python aplicando programación 
 proyecto-libreria/
 ├── models/
 │   ├── libro.py
-│   └── cliente.py
+│   ├── cliente.py
+│   └── venta.py
 ├── services/
 ├── storage/
 ├── utils/
@@ -29,12 +30,9 @@ proyecto-libreria/
 ## ▶️ Ejemplo de uso
 ```python
 libro = Libro(1, "1984", "George Orwell", "Distopia", 50, 10)
-libro.reducir_stock(2)
-print(libro)
-
 cliente = Cliente("12345678", "Ana Torres", "ana@gmail.com", "Lima")
-cliente.marcar_como_frecuente()
-print(cliente)
+venta = Venta(libro, cliente, 2)
+print(venta)
 ```
 
 ## 📈 Estado
