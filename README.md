@@ -10,7 +10,7 @@ Sistema de gestión de librería desarrollado en Python aplicando programación 
 - Encapsulamiento con atributos privados
 - Properties y setters
 - Validaciones con manejo de errores
-- Métodos de dominio (reducir_stock, aumentar_stock)
+- Métodos de dominio (`reducir_stock`, `aumentar_stock`, `marcar_como_frecuente`)
 - Arquitectura modular (models, services, storage, utils)
 
 ## 📁 Estructura
@@ -18,8 +18,7 @@ Sistema de gestión de librería desarrollado en Python aplicando programación 
 proyecto-libreria/
 ├── models/
 │   ├── libro.py
-│   ├── cliente.py
-│   └── venta.py
+│   └── cliente.py
 ├── services/
 ├── storage/
 ├── utils/
@@ -32,6 +31,10 @@ proyecto-libreria/
 libro = Libro(1, "1984", "George Orwell", "Distopia", 50, 10)
 libro.reducir_stock(2)
 print(libro)
+
+cliente = Cliente("12345678", "Ana Torres", "ana@gmail.com", "Lima")
+cliente.marcar_como_frecuente()
+print(cliente)
 ```
 
 ## 📈 Estado
@@ -39,4 +42,3 @@ print(libro)
 
 ## 🎯 Objetivo del proyecto
 Este proyecto forma parte de mi proceso de aprendizaje para convertirme en desarrollador backend, aplicando buenas prácticas y diseño de software escalable.
-```
