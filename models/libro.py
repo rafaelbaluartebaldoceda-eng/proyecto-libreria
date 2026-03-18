@@ -3,7 +3,11 @@ class Libro:
     def __init__(self,id,titulo,autor,disponible=True):
         """Inicializa un libro con los atributos basicos."""
         self._id=id
+        if not titulo.strip():
+            raise ValueError("El titulo no puede estar vacio")
         self._titulo=titulo
+        if not autor.strip():
+            raise ValueError("El nombre del autor no puede estar vacio")
         self._autor=autor
         self._disponible=disponible
     @property
