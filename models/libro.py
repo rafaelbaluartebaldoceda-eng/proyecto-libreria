@@ -90,7 +90,7 @@ class Libro:
     def __str__(self):
         """Retorna la informacion completa del libro para el usuario"""
         estado= "Disponible" if self.disponible else "No Disponible"
-        return f"Libro {self._titulo} - {self._autor} | Categoria: {self._categoria}, Precio: ${self._precio}, Stock: {self._stock}, Estado: {estado}"
+        return f"Libro {self._titulo} - {self._autor} | Categoria: {self._categoria}, Precio: S/.{self._precio}, Stock: {self._stock}, Estado: {estado}"
     def __repr__(self):
         """Retorna la informacion tecnica de los atributos del libro"""
         return f"Libro(id={self._id}, titulo='{self._titulo}', autor='{self._autor}', categoria='{self._categoria}', precio={self._precio}, stock={self._stock}, disponible={self.disponible})"

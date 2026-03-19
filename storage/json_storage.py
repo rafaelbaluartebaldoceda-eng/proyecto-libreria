@@ -10,7 +10,9 @@ class JsonStorage:
         """Guarda una lista de diccionarios en el archivo JSON."""
         if not isinstance(datos, list):
             raise ValueError("Los datos deben ser una lista")
-        os.makedirs(os.path.dirname(self._filepath), exist_ok=True)
+        dirpath = os.path.dirname(self._filepath)
+        if dirpath:
+            os.makedirs(dirpath, exist_ok=True)
         with open(self._filepath, 'w', encoding='utf-8') as f:
             json.dump(datos, f, indent=4, ensure_ascii=False)
     def cargar(self):

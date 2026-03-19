@@ -33,7 +33,7 @@ class PedidoService:
         if pedido is None:
             raise ValueError("Pedido no encontrado")
         nuevo_estado = nuevo_estado.lower()
-        if nuevo_estado == "entregado":
+        if pedido.estado != "entregado" and nuevo_estado == "entregado":
             pedido.libro.reducir_stock(pedido.cantidad)
         pedido.estado = nuevo_estado
         self.guardar_pedidos()
