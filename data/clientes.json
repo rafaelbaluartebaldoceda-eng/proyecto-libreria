@@ -1,0 +1,37 @@
+[
+    {
+        "dni": "12345678",
+        "nombre": "Ana Torres",
+        "correo": "ana@gmail.com",
+        "direccion": "Lima",
+        "frecuente": false
+    },
+    {
+        "dni": "23456789",
+        "nombre": "Carlos Ruiz",
+        "correo": "carlos@gmail.com",
+        "direccion": "Cusco",
+        "frecuente": false
+    },
+    {
+        "dni": "34567890",
+        "nombre": "Lucia Vega",
+        "correo": "lucia@gmail.com",
+        "direccion": "Arequipa",
+        "frecuente": false
+    },
+    {
+        "dni": "45678901",
+        "nombre": "Marco Rios",
+        "correo": "marco@gmail.com",
+        "direccion": "Piura",
+        "frecuente": false
+    },
+    {
+        "dni": "60789327",
+        "nombre": "Rafael Baluarte",
+        "correo": "rafael.baluarte.baldoceda@gmail.com",
+        "direccion": "Ate Lima",
+        "frecuente": true
+    }
+]
