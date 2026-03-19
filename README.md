@@ -16,6 +16,7 @@ Sistema de gestión de librería desarrollado en Python aplicando programación 
 - Generación automática de IDs
 - Registro de fechas con `datetime`
 - Separación de capas (models vs services)
+- Lógica de negocio en services (cambio de estado, filtros)
 
 ## 📁 Estructura
 ```
@@ -26,7 +27,8 @@ proyecto-libreria/
 │   ├── venta.py
 │   └── pedido.py
 ├── services/
-│   └── venta_service.py
+│   ├── venta_service.py
+│   └── pedido_service.py
 ├── storage/
 ├── utils/
 ├── main.py
@@ -39,17 +41,22 @@ libro = Libro(1, "1984", "George Orwell", "Distopia", 50, 10)
 cliente = Cliente("12345678", "Ana Torres", "ana@gmail.com", "Lima")
 
 # Registrar una venta
-service = VentaService()
-venta = service.registrar_venta(libro, cliente, 2)
+venta_service = VentaService()
+venta = venta_service.registrar_venta(libro, cliente, 2)
 print(venta)
 
 # Registrar un pedido
-pedido = Pedido(libro, cliente, 1, "domicilio")
+pedido_service = PedidoService()
+pedido = pedido_service.registrar_pedido(libro, cliente, 1, "domicilio")
 print(pedido)
+
+# Cambiar estado del pedido
+pedido_service.cambiar_estado(pedido.id, "entregado")
 ```
 
 ## 📈 Estado
-🚧 En desarrollo — Fase 2: Services
+🚧 En desarrollo — Fase 2: Services ✅ completados
 
 ## 🎯 Objetivo del proyecto
 Este proyecto forma parte de mi proceso de aprendizaje para convertirme en desarrollador backend, aplicando buenas prácticas y diseño de software escalable.
+```
