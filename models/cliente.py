@@ -58,6 +58,25 @@ class Cliente:
     def marcar_como_frecuente(self):
         """Marca al cliente como frecuente."""
         self._frecuente = True
+    def to_dict(self):
+        """Convierte el objeto Cliente a diccionario."""
+        return {
+            "dni": self._dni,
+            "nombre": self._nombre,
+            "correo": self._correo,
+            "direccion": self._direccion,
+            "frecuente": self._frecuente
+        }
+    @classmethod
+    def from_dict(cls, data):
+        """Crea una instancia de Cliente desde un diccionario."""
+        return cls(
+            data["dni"],
+            data["nombre"],
+            data["correo"],
+            data["direccion"],
+            data["frecuente"]
+        )
     def __str__(self):
         """Devuelve los datos del cliente de forma legible"""
         frecuente="Si" if self._frecuente else "No"

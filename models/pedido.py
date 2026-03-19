@@ -66,6 +66,30 @@ class Pedido:
     def total(self):
         """Calcula y devuelve el total del pedido dinamicamente"""
         return self._libro.precio * self._cantidad
+    def to_dict(self):
+        """Convierte el objeto Pedido a diccionario."""
+        return {
+            "id": self._id,
+            "libro_id": self._libro.id,
+            "cliente_dni": self._cliente.dni,
+            "cantidad": self._cantidad,
+            "metodo_entrega": self._metodo_entrega,
+            "estado": self._estado,
+            "fecha": self._fecha.isoformat()
+        }
+
+    @classmethod
+    def from_dict(cls, data, libro, cliente):
+        """Reconstruye un Pedido desde un diccionario."""
+        pedido = cls.__new__(cls)
+        pedido._id = data["id"]
+        pedido._libro = libro
+        pedido._cliente = cliente
+        pedido._cantidad = data["cantidad"]
+        pedido._metodo_entrega = data["metodo_entrega"]
+        pedido._estado = data["estado"]
+        pedido._fecha = datetime.fromisoformat(data["fecha"])
+        return pedido
     def __str__(self):
         """Retorna la informacion del pedido de forma legible"""
         return (f"Pedido #{self._id} | "

@@ -17,6 +17,8 @@ Sistema de gestión de librería desarrollado en Python aplicando programación 
 - Registro de fechas con `datetime`
 - Separación de capas (models vs services)
 - Lógica de negocio en services (cambio de estado, filtros)
+- Persistencia en JSON (`to_dict`, `from_dict`)
+- Reconstrucción de objetos desde almacenamiento
 
 ## 📁 Estructura
 ```
@@ -30,6 +32,7 @@ proyecto-libreria/
 │   ├── venta_service.py
 │   └── pedido_service.py
 ├── storage/
+│   └── json_storage.py
 ├── utils/
 ├── main.py
 └── README.md
@@ -37,26 +40,34 @@ proyecto-libreria/
 
 ## ▶️ Ejemplo de uso
 ```python
+from storage.json_storage import JsonStorage
+from models.libro import Libro
+from models.cliente import Cliente
+from services.venta_service import VentaService
+from services.pedido_service import PedidoService
+
 libro = Libro(1, "1984", "George Orwell", "Distopia", 50, 10)
 cliente = Cliente("12345678", "Ana Torres", "ana@gmail.com", "Lima")
 
+libros = [libro]
+clientes = [cliente]
+
 # Registrar una venta
-venta_service = VentaService()
+storage_ventas = JsonStorage("data/ventas.json")
+venta_service = VentaService(storage_ventas, libros, clientes)
 venta = venta_service.registrar_venta(libro, cliente, 2)
 print(venta)
 
 # Registrar un pedido
-pedido_service = PedidoService()
+storage_pedidos = JsonStorage("data/pedidos.json")
+pedido_service = PedidoService(storage_pedidos, libros, clientes)
 pedido = pedido_service.registrar_pedido(libro, cliente, 1, "domicilio")
-print(pedido)
-
-# Cambiar estado del pedido
 pedido_service.cambiar_estado(pedido.id, "entregado")
+print(pedido)
 ```
 
 ## 📈 Estado
-🚧 En desarrollo — Fase 2: Services ✅ completados
+🚧 En desarrollo — Fase 3: Storage ✅ completado
 
 ## 🎯 Objetivo del proyecto
 Este proyecto forma parte de mi proceso de aprendizaje para convertirme en desarrollador backend, aplicando buenas prácticas y diseño de software escalable.
-```

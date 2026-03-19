@@ -46,6 +46,26 @@ class Venta:
     def fecha(self):
         """Devuelve la fecha y hora de la venta"""
         return self._fecha
+    def to_dict(self):
+        """Convierte el objeto Venta a diccionario."""
+        return {
+            "id": self._id,
+            "libro_id": self._libro.id,
+            "cliente_dni": self._cliente.dni,
+            "cantidad": self._cantidad,
+            "total": self.total,
+            "fecha": self._fecha.isoformat()
+        }
+    @classmethod
+    def from_dict(cls, data, libro, cliente):
+        """Reconstruye una Venta desde un diccionario."""
+        venta = cls.__new__(cls)
+        venta._id = data["id"]
+        venta._libro = libro
+        venta._cliente = cliente
+        venta._cantidad = data["cantidad"]
+        venta._fecha = datetime.fromisoformat(data["fecha"])
+        return venta
     def __str__(self):
         """Retorna la informacion de la venta de forma legible"""
         return (f"Venta #{self._id} | "

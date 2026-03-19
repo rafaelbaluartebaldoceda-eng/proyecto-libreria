@@ -66,6 +66,27 @@ class Libro:
         if cantidad > self._stock:
             raise ValueError("Stock insuficiente")
         self._stock -= cantidad
+    def to_dict(self):
+        """Convierte el objeto Libro a diccionario."""
+        return {
+            "id": self._id,
+            "titulo": self._titulo,
+            "autor": self._autor,
+            "categoria": self._categoria,
+            "precio": self._precio,
+            "stock": self._stock
+        }
+    @classmethod
+    def from_dict(cls, data):
+        """Crea una instancia de Libro desde un diccionario."""
+        return cls(
+            data["id"],
+            data["titulo"],
+            data["autor"],
+            data["categoria"],
+            data["precio"],
+            data["stock"]
+        )
     def __str__(self):
         """Retorna la informacion completa del libro para el usuario"""
         estado= "Disponible" if self.disponible else "No Disponible"
