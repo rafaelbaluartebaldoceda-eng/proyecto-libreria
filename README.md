@@ -1,24 +1,27 @@
 # 📚 Sistema de Gestión de Librería
 
 ## 📋 Descripción
-Sistema de gestión de librería desarrollado en Python aplicando programación orientada a objetos, validaciones y arquitectura limpia. Incluye interfaz CLI funcional con persistencia completa en JSON.
+Sistema de gestión de librería desarrollado en Python aplicando programación orientada a objetos, validaciones y arquitectura limpia. Incluye interfaz CLI funcional con persistencia completa en PostgreSQL.
 
 ## 🛠️ Tecnologías
 - Python 3
+- PostgreSQL
+- psycopg2
 
 ## 🧠 Conceptos aplicados
 - Encapsulamiento con atributos privados
 - Properties y setters
 - Validaciones con manejo de errores
 - Métodos de dominio (`reducir_stock`, `aumentar_stock`, `marcar_como_frecuente`)
-- Arquitectura modular (models, services, storage)
+- Arquitectura modular (models, services, repositories, database)
 - Composición de objetos (Venta y Pedido usan Libro y Cliente)
 - Generación automática de IDs
 - Registro de fechas con `datetime`
-- Separación de capas (models vs services)
-- Lógica de negocio en services (cambio de estado, filtros)
-- Persistencia completa en JSON (`to_dict`, `from_dict`)
-- Reconstrucción de objetos desde almacenamiento
+- Separación de capas (models / services / repositories)
+- Lógica de negocio en services
+- Persistencia en PostgreSQL con `psycopg2`
+- Context managers para manejo seguro de conexiones
+- Patrón Repository para acceso a datos
 - Interfaz CLI con menú de administrador y usuario
 
 ## 📁 Estructura
@@ -32,19 +35,32 @@ proyecto-libreria/
 ├── services/
 │   ├── venta_service.py
 │   └── pedido_service.py
+├── repositories/
+│   ├── libro_repository.py
+│   ├── cliente_repository.py
+│   ├── venta_repository.py
+│   └── pedido_repository.py
+├── database/
+│   └── connection.py
 ├── storage/
 │   └── json_storage.py
-├── data/
-│   ├── libros.json
-│   ├── clientes.json
-│   ├── ventas.json
-│   └── pedidos.json
 ├── main.py
 └── README.md
 ```
 
+## ⚙️ Requisitos
+- Python 3.x
+- PostgreSQL 17+
+- psycopg2-binary
+
+## 🗄️ Configuración de base de datos
+```sql
+CREATE DATABASE libreria;
+```
+
 ## ▶️ Cómo ejecutar
 ```bash
+pip install psycopg2-binary
 python main.py
 ```
 
@@ -63,10 +79,11 @@ python main.py
 - Ver stock de libros
 
 ## 📈 Estado
-✅ Fase 1 completada — Sistema CLI con persistencia en JSON
+✅ Fase 1 — Sistema CLI con persistencia en JSON
+🔄 Fase 2 — Migración a PostgreSQL (en progreso)
 
 **Próxima fase:**
-🔜 Fase 2 — Migración a PostgreSQL
+🔜 Fase 3 — API REST con FastAPI
 
 ## 🎯 Objetivo del proyecto
 Este proyecto forma parte de mi proceso de aprendizaje para convertirme en desarrollador backend, aplicando buenas prácticas y diseño de software escalable.
