@@ -35,3 +35,28 @@ class VentaRepository:
                 }, libro, cliente)
                 ventas.append(venta)
         return ventas
+    def buscar_por_id(self, id, libros, clientes):
+        """Busca una venta por su id."""
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id, libro_id, cliente_dni, cantidad, fecha FROM ventas WHERE id = %s", (id,))
+                f = cursor.fetchone()
+        if not f:
+            return None
+        libro = next((l for l in libros if l.id == f[1]), None)
+        cliente = next((c for c in clientes if c.dni == f[2]), None)
+        if libro and cliente:
+            return Venta.from_dict({"id": f[0], "libro_id": f[1], "cliente_dni": f[2], "cantidad": f[3], "fecha": f[4].isoformat()}, libro, cliente)
+        return None
+
+    def total_ventas(self):
+        """Retorna el total acumulado de todas las ventas directamente desde SQL."""
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT SUM(v.cantidad * l.precio)
+                    FROM ventas v
+                    JOIN libros l ON v.libro_id = l.id
+                """)
+                resultado = cursor.fetchone()[0]
+        return resultado or 0

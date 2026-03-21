@@ -48,3 +48,17 @@ class PedidoRepository:
                 cursor.execute("""
                     UPDATE pedidos SET estado = %s WHERE id = %s
                 """, (nuevo_estado, pedido_id))
+                
+    def buscar_por_id(self, id_pedido, libros, clientes):
+        """Busca un pedido por su id."""
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id, libro_id, cliente_dni, cantidad, metodo_entrega, estado, fecha FROM pedidos WHERE id = %s", (id_pedido,))
+                f = cursor.fetchone()
+        if not f:
+            return None
+        libro = next((l for l in libros if l.id == f[1]), None)
+        cliente = next((c for c in clientes if c.dni == f[2]), None)
+        if libro and cliente:
+            return Pedido.from_dict({"id": f[0], "libro_id": f[1], "cliente_dni": f[2], "cantidad": f[3], "metodo_entrega": f[4], "estado": f[5], "fecha": f[6].isoformat()}, libro, cliente)
+        return None

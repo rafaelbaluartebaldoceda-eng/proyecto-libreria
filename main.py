@@ -2,54 +2,53 @@ from models.libro import Libro
 from models.cliente import Cliente
 from services.venta_service import VentaService
 from services.pedido_service import PedidoService
-from storage.json_storage import JsonStorage
+from repositories.libro_repository import LibroRepository
+from repositories.cliente_repository import ClienteRepository
+from repositories.venta_repository import VentaRepository
+from repositories.pedido_repository import PedidoRepository
 
 
-def inicializar_datos(storage_libros, storage_clientes):
-    """Inicializa los datos del sistema."""
-    libros_precargados = [
-        Libro(101, "El Principito", "Antoine de Saint-Exupery", "Ficcion", 35, 10),
-        Libro(102, "Cien Anios de Soledad", "Gabriel Garcia Marquez", "Realismo Magico", 45, 8),
-        Libro(103, "1984", "George Orwell", "Distopia", 50, 6),
-    ]
-    clientes_precargados = [
-        Cliente("12345678", "Ana Torres", "ana@gmail.com", "Lima"),
-        Cliente("23456789", "Carlos Ruiz", "carlos@gmail.com", "Cusco"),
-        Cliente("34567890", "Lucia Vega", "lucia@gmail.com", "Arequipa"),
-        Cliente("45678901", "Marco Rios", "marco@gmail.com", "Piura"),
-    ]
-    datos_libros = storage_libros.cargar()
-    if datos_libros:
-        libros = [Libro.from_dict(l) for l in datos_libros]
-    else:
+def inicializar_datos(libro_repo, cliente_repo):
+    """Carga o inicializa los datos del sistema desde PostgreSQL."""
+    libros = libro_repo.obtener_todos()
+    if not libros:
+        libros_precargados = [
+            Libro(101, "El Principito", "Antoine de Saint-Exupery", "Ficcion", 35, 10),
+            Libro(102, "Cien Anios de Soledad", "Gabriel Garcia Marquez", "Realismo Magico", 45, 8),
+            Libro(103, "1984", "George Orwell", "Distopia", 50, 6),
+        ]
+        for libro in libros_precargados:
+            libro_repo.guardar(libro)
         libros = libros_precargados
-        storage_libros.guardar([l.to_dict() for l in libros])
 
-    datos_clientes = storage_clientes.cargar()
-    if datos_clientes:
-        clientes = [Cliente.from_dict(c) for c in datos_clientes]
-    else:
+    clientes = cliente_repo.obtener_todos()
+    if not clientes:
+        clientes_precargados = [
+            Cliente("12345678", "Ana Torres", "ana@gmail.com", "Lima"),
+            Cliente("23456789", "Carlos Ruiz", "carlos@gmail.com", "Cusco"),
+            Cliente("34567890", "Lucia Vega", "lucia@gmail.com", "Arequipa"),
+            Cliente("45678901", "Marco Rios", "marco@gmail.com", "Piura"),
+        ]
+        for cliente in clientes_precargados:
+            cliente_repo.guardar(cliente)
         clientes = clientes_precargados
-        storage_clientes.guardar([c.to_dict() for c in clientes])
 
     return libros, clientes
 
 
-def inicializar_services(libros, clientes):
-    """Inicializa los services con su storage correspondiente."""
-    storage_ventas = JsonStorage("data/ventas.json")
-    storage_pedidos = JsonStorage("data/pedidos.json")
-    venta_service = VentaService(storage_ventas, libros, clientes)
-    pedido_service = PedidoService(storage_pedidos, libros, clientes)
+def inicializar_services(libro_repo, cliente_repo):
+    """Inicializa los services con sus repositories."""
+    venta_service = VentaService(VentaRepository(), libro_repo, cliente_repo)
+    pedido_service = PedidoService(PedidoRepository(), libro_repo, cliente_repo)
     return venta_service, pedido_service
 
 
-def registrar_libro(libros, storage_libros):
+def registrar_libro(libro_repo):
     """Registra un nuevo libro en el sistema."""
     print("\n--- REGISTRAR LIBRO ---")
     try:
         id = int(input("ID: "))
-        if any(l.id == id for l in libros):
+        if libro_repo.buscar_por_id(id):
             print("Ya existe un libro con ese ID.")
             return
         titulo = input("Titulo: ")
@@ -58,19 +57,18 @@ def registrar_libro(libros, storage_libros):
         precio = int(input("Precio (S/.): "))
         stock = int(input("Stock: "))
         libro = Libro(id, titulo, autor, categoria, precio, stock)
-        libros.append(libro)
-        storage_libros.guardar([l.to_dict() for l in libros])
+        libro_repo.guardar(libro)
         print("Libro registrado correctamente.")
     except ValueError as e:
         print(f"Error: {e}")
 
 
-def registrar_cliente(clientes, storage_clientes):
+def registrar_cliente(cliente_repo):
     """Registra un nuevo cliente en el sistema."""
     print("\n--- REGISTRAR CLIENTE ---")
     try:
         dni = input("DNI (8 digitos): ")
-        if any(c.dni == dni for c in clientes):
+        if cliente_repo.buscar_por_dni(dni):
             print("Ya existe un cliente con ese DNI.")
             return
         nombre = input("Nombre completo: ")
@@ -78,20 +76,19 @@ def registrar_cliente(clientes, storage_clientes):
         direccion = input("Direccion: ")
         frecuente = input("Cliente frecuente? (s/n): ").lower() == "s"
         cliente = Cliente(dni, nombre, correo, direccion, frecuente)
-        clientes.append(cliente)
-        storage_clientes.guardar([c.to_dict() for c in clientes])
+        cliente_repo.guardar(cliente)
         print("Cliente registrado correctamente.")
     except ValueError as e:
         print(f"Error: {e}")
 
 
-def registrar_venta(libros, clientes, venta_service, storage_libros):
+def registrar_venta(libro_repo, venta_service):
     """Registra una nueva venta en el sistema."""
     print("\n--- REGISTRAR VENTA ---")
     try:
-        reporte_stock(libros)
+        reporte_stock(libro_repo)
         id_libro = int(input("ID del libro: "))
-        libro = next((l for l in libros if l.id == id_libro), None)
+        libro = libro_repo.buscar_por_id(id_libro)
         if not libro:
             print("Libro no encontrado.")
             return
@@ -99,26 +96,21 @@ def registrar_venta(libros, clientes, venta_service, storage_libros):
             print("El libro no esta disponible.")
             return
         dni_cliente = input("DNI del cliente: ")
-        cliente = next((c for c in clientes if c.dni == dni_cliente), None)
-        if not cliente:
-            print("Cliente no encontrado.")
-            return
         cantidad = int(input("Cantidad: "))
-        venta = venta_service.registrar_venta(libro, cliente, cantidad)
-        storage_libros.guardar([l.to_dict() for l in libros])
+        venta = venta_service.registrar_venta(id_libro, dni_cliente, cantidad)
         print("Venta registrada correctamente.")
         print(venta)
     except ValueError as e:
         print(f"Error: {e}")
 
 
-def realizar_pedido(libros, clientes, pedido_service):
+def realizar_pedido(libro_repo, pedido_service):
     """Realiza un pedido para un cliente."""
     print("\n--- REALIZAR PEDIDO ---")
     try:
-        reporte_stock(libros)
+        reporte_stock(libro_repo)
         id_libro = int(input("ID del libro: "))
-        libro = next((l for l in libros if l.id == id_libro), None)
+        libro = libro_repo.buscar_por_id(id_libro)
         if not libro:
             print("Libro no encontrado.")
             return
@@ -126,22 +118,19 @@ def realizar_pedido(libros, clientes, pedido_service):
             print("El libro no esta disponible.")
             return
         dni_cliente = input("DNI del cliente: ")
-        cliente = next((c for c in clientes if c.dni == dni_cliente), None)
-        if not cliente:
-            print("Cliente no encontrado.")
-            return
         cantidad = int(input("Cantidad: "))
         metodo = input("Metodo de entrega (tienda/domicilio): ").lower()
-        pedido = pedido_service.registrar_pedido(libro, cliente, cantidad, metodo)
+        pedido = pedido_service.registrar_pedido(id_libro, dni_cliente, cantidad, metodo)
         print("Pedido registrado correctamente.")
         print(pedido)
     except ValueError as e:
         print(f"Error: {e}")
 
 
-def reporte_stock(libros):
+def reporte_stock(libro_repo):
     """Muestra el reporte de stock de todos los libros."""
     print("\n--- REPORTE DE STOCK ---")
+    libros = libro_repo.obtener_todos()
     if not libros:
         print("No hay libros registrados.")
         return
@@ -149,10 +138,10 @@ def reporte_stock(libros):
         print(f"[{libro.id}] {libro}")
 
 
-def reporte_clientes_frecuentes(clientes):
+def reporte_clientes_frecuentes(cliente_repo):
     """Muestra el reporte de clientes frecuentes."""
     print("\n--- CLIENTES FRECUENTES ---")
-    frecuentes = [c for c in clientes if c.frecuente]
+    frecuentes = [c for c in cliente_repo.obtener_todos() if c.frecuente]
     if not frecuentes:
         print("No hay clientes frecuentes registrados.")
         return
@@ -182,7 +171,7 @@ def reporte_pedidos(pedido_service):
         print(pedido)
 
 
-def menu_administrador(libros, clientes, venta_service, pedido_service, storage_libros):
+def menu_administrador(libro_repo, cliente_repo, venta_service, pedido_service):
     """Muestra el menu del administrador y gestiona sus opciones."""
     while True:
         print("\n--- MENU ADMINISTRADOR ---")
@@ -196,13 +185,13 @@ def menu_administrador(libros, clientes, venta_service, pedido_service, storage_
         opcion = input("Opcion: ")
 
         if opcion == "1":
-            registrar_libro(libros, storage_libros)
+            registrar_libro(libro_repo)
         elif opcion == "2":
-            registrar_venta(libros, clientes, venta_service, storage_libros)
+            registrar_venta(libro_repo, venta_service)
         elif opcion == "3":
-            reporte_stock(libros)
+            reporte_stock(libro_repo)
         elif opcion == "4":
-            reporte_clientes_frecuentes(clientes)
+            reporte_clientes_frecuentes(cliente_repo)
         elif opcion == "5":
             reporte_ventas(venta_service)
         elif opcion == "6":
@@ -213,7 +202,7 @@ def menu_administrador(libros, clientes, venta_service, pedido_service, storage_
             print("Opcion invalida.")
 
 
-def menu_usuario(libros, clientes, pedido_service, storage_clientes):
+def menu_usuario(libro_repo, cliente_repo, pedido_service):
     """Muestra el menu del usuario y gestiona sus opciones."""
     while True:
         print("\n--- MENU USUARIO ---")
@@ -224,11 +213,11 @@ def menu_usuario(libros, clientes, pedido_service, storage_clientes):
         opcion = input("Opcion: ")
 
         if opcion == "1":
-            registrar_cliente(clientes, storage_clientes)
+            registrar_cliente(cliente_repo)
         elif opcion == "2":
-            realizar_pedido(libros, clientes, pedido_service)
+            realizar_pedido(libro_repo, pedido_service)
         elif opcion == "3":
-            reporte_stock(libros)
+            reporte_stock(libro_repo)
         elif opcion == "0":
             break
         else:
@@ -245,10 +234,10 @@ def main():
  LLLLL   III  M   M  A     A   BBBBB   OOO   OOO     K   K
     """)
 
-    storage_libros = JsonStorage("data/libros.json")
-    storage_clientes = JsonStorage("data/clientes.json")
-    libros, clientes = inicializar_datos(storage_libros, storage_clientes)
-    venta_service, pedido_service = inicializar_services(libros, clientes)
+    libro_repo = LibroRepository()
+    cliente_repo = ClienteRepository()
+    inicializar_datos(libro_repo, cliente_repo)
+    venta_service, pedido_service = inicializar_services(libro_repo, cliente_repo)
 
     while True:
         print("\n        M E N U        ")
@@ -259,9 +248,9 @@ def main():
         opcion = input("Seleccione una opcion: ")
 
         if opcion == "1":
-            menu_administrador(libros, clientes, venta_service, pedido_service, storage_libros)
+            menu_administrador(libro_repo, cliente_repo, venta_service, pedido_service)
         elif opcion == "2":
-            menu_usuario(libros, clientes, pedido_service, storage_clientes)
+            menu_usuario(libro_repo, cliente_repo, pedido_service)
         elif opcion == "0":
             print("Gracias por usar el sistema.")
             break

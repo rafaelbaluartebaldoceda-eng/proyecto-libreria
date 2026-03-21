@@ -3,60 +3,51 @@ from models.pedido import Pedido
 class PedidoService:
     """Servicio que gestiona la logica de negocio de los pedidos."""
 
-    def __init__(self, storage, libros, clientes):
-        """Inicializa el servicio con storage y datos de libros y clientes."""
-        self._storage = storage
-        self._libros = libros
-        self._clientes = clientes
-        self._pedidos = self._cargar_pedidos()
+    def __init__(self, pedido_repo, libro_repo, cliente_repo):
+        """Inicializa el servicio con los repositories necesarios."""
+        self._pedido_repo = pedido_repo
+        self._libro_repo = libro_repo
+        self._cliente_repo = cliente_repo
 
-    def registrar_pedido(self, libro, cliente, cantidad, metodo_entrega):
+    def registrar_pedido(self, libro_id, cliente_dni, cantidad, metodo_entrega):
         """Crea y registra un nuevo pedido en el sistema."""
-        if libro is None or cliente is None:
-            raise ValueError("Libro y cliente son requeridos")
+        libro = self._libro_repo.buscar_por_id(libro_id)
+        cliente = self._cliente_repo.buscar_por_dni(cliente_dni)
+        if not libro:
+            raise ValueError("Libro no encontrado")
+        if not cliente:
+            raise ValueError("Cliente no encontrado")
         pedido = Pedido(libro, cliente, cantidad, metodo_entrega)
-        self._pedidos.append(pedido)
-        self.guardar_pedidos()
+        self._pedido_repo.guardar(pedido)
         return pedido
 
     def listar_pedidos(self):
-        """Retorna una copia de la lista de pedidos registrados."""
-        return list(self._pedidos)
+        """Retorna una lista de todos los pedidos registrados."""
+        libros = self._libro_repo.obtener_todos()
+        clientes = self._cliente_repo.obtener_todos()
+        return self._pedido_repo.obtener_todos(libros, clientes)
 
     def buscar_pedido_por_id(self, id_pedido):
-        """Busca y retorna un pedido por su id, o None si no existe."""
-        return next((p for p in self._pedidos if p.id == id_pedido), None)
+        """Busca y retorna un pedido por su id."""
+        libros = self._libro_repo.obtener_todos()
+        clientes = self._cliente_repo.obtener_todos()
+        return self._pedido_repo.buscar_por_id(id_pedido, libros, clientes)
 
     def cambiar_estado(self, id_pedido, nuevo_estado):
         """Cambia el estado de un pedido existente."""
-        pedido = self.buscar_pedido_por_id(id_pedido)
+        libros = self._libro_repo.obtener_todos()
+        clientes = self._cliente_repo.obtener_todos()
+        pedido = self._pedido_repo.buscar_por_id(id_pedido, libros, clientes)
         if pedido is None:
             raise ValueError("Pedido no encontrado")
         nuevo_estado = nuevo_estado.lower()
         if pedido.estado != "entregado" and nuevo_estado == "entregado":
             pedido.libro.reducir_stock(pedido.cantidad)
+            self._libro_repo.guardar(pedido.libro)
         pedido.estado = nuevo_estado
-        self.guardar_pedidos()
+        self._pedido_repo.actualizar_estado(id_pedido, nuevo_estado)
         return pedido
 
     def pedidos_por_estado(self, estado):
         """Retorna lista de pedidos filtrados por estado."""
-        return [p for p in self._pedidos if p.estado == estado.lower()]
-
-    def guardar_pedidos(self):
-        """Guarda todos los pedidos en el storage."""
-        self._storage.guardar([p.to_dict() for p in self._pedidos])
-
-    def _cargar_pedidos(self):
-        """Carga los pedidos desde el storage."""
-        data = self._storage.cargar()
-        if data:
-            Pedido._contador_pedido = max(p["id"] for p in data)
-        pedidos = []
-        for p in data:
-            libro = next((l for l in self._libros if l.id == p["libro_id"]), None)
-            cliente = next((c for c in self._clientes if c.dni == p["cliente_dni"]), None)
-            if libro and cliente:
-                pedido = Pedido.from_dict(p, libro, cliente)
-                pedidos.append(pedido)
-        return pedidos
+        return [p for p in self.listar_pedidos() if p.estado == estado.lower()]
