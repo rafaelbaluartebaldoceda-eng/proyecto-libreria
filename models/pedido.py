@@ -4,8 +4,8 @@ from models.cliente import Cliente
 
 class Pedido:
     """Entidad que representa un pedido en el sistema de libreria."""
-    _contador_pedido = 0
-    def __init__(self, libro, cliente, cantidad, metodo_entrega, estado="pendiente"):
+
+    def __init__(self, libro, cliente, cantidad, metodo_entrega, estado="pendiente", pedido_id=None, fecha=None):
         """Inicializa un pedido con libro, cliente, cantidad y metodo de entrega."""
         if not isinstance(libro, Libro):
             raise TypeError("El libro debe ser una instancia de Libro")
@@ -18,14 +18,13 @@ class Pedido:
             raise ValueError("El metodo de entrega debe ser 'tienda' o 'domicilio'")
         if estado not in ("pendiente", "entregado", "cancelado"):
             raise ValueError("El estado debe ser 'pendiente', 'entregado' o 'cancelado'")
-        Pedido._contador_pedido += 1
-        self._id = Pedido._contador_pedido
+        self._id = pedido_id
         self._libro = libro
         self._cliente = cliente
         self._cantidad = cantidad
         self._metodo_entrega = metodo_entrega
         self._estado = estado
-        self._fecha = datetime.now()
+        self._fecha = fecha or datetime.now()
     @property
     def id(self):
         """Devuelve el id unico del pedido"""
@@ -81,6 +80,9 @@ class Pedido:
     @classmethod
     def from_dict(cls, data, libro, cliente):
         """Reconstruye un Pedido desde un diccionario."""
+        fecha = data["fecha"]
+        if isinstance(fecha, str):
+            fecha = datetime.fromisoformat(fecha)
         pedido = cls.__new__(cls)
         pedido._id = data["id"]
         pedido._libro = libro
@@ -88,7 +90,7 @@ class Pedido:
         pedido._cantidad = data["cantidad"]
         pedido._metodo_entrega = data["metodo_entrega"]
         pedido._estado = data["estado"]
-        pedido._fecha = datetime.fromisoformat(data["fecha"])
+        pedido._fecha = fecha
         return pedido
     def __str__(self):
         """Retorna la informacion del pedido de forma legible"""

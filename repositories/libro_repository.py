@@ -1,12 +1,12 @@
-from database.connection import get_connection
+from database.connection import managed_connection
 from models.libro import Libro
 
 class LibroRepository:
     """Repositorio que maneja la persistencia de libros en PostgreSQL."""
 
-    def guardar(self, libro):
+    def guardar(self, libro, connection=None):
         """Guarda o actualiza un libro en la base de datos."""
-        with get_connection() as conn:
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     INSERT INTO libros (id, titulo, autor, categoria, precio, stock)
@@ -19,17 +19,17 @@ class LibroRepository:
                         stock = EXCLUDED.stock
                 """, (libro.id, libro.titulo, libro.autor, libro.categoria, libro.precio, libro.stock))
 
-    def obtener_todos(self):
+    def obtener_todos(self, connection=None):
         """Retorna una lista de todos los libros de la base de datos."""
-        with get_connection() as conn:
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT id, titulo, autor, categoria, precio, stock FROM libros")
                 filas = cursor.fetchall()
         return [Libro(f[0], f[1], f[2], f[3], f[4], f[5]) for f in filas]
 
-    def buscar_por_id(self, id):
+    def buscar_por_id(self, id, connection=None):
         """Busca y retorna un libro por su id, o None si no existe."""
-        with get_connection() as conn:
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT id, titulo, autor, categoria, precio, stock FROM libros WHERE id = %s", (id,))
                 fila = cursor.fetchone()

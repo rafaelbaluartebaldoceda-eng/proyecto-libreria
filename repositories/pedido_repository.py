@@ -1,26 +1,24 @@
-from database.connection import get_connection
+from database.connection import managed_connection
 from models.pedido import Pedido
 
 class PedidoRepository:
     """Repositorio que maneja la persistencia de pedidos en PostgreSQL."""
 
-    def guardar(self, pedido):
-        """Guarda o actualiza un pedido en la base de datos."""
-        with get_connection() as conn:
+    def guardar(self, pedido, connection=None):
+        """Guarda un pedido en la base de datos."""
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     INSERT INTO pedidos (libro_id, cliente_dni, cantidad, metodo_entrega, estado, fecha)
                     VALUES (%s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (id) DO UPDATE SET
-                        estado = EXCLUDED.estado
                     RETURNING id
                 """, (pedido.libro.id, pedido.cliente.dni, pedido.cantidad,
                       pedido.metodo_entrega, pedido.estado, pedido.fecha))
                 pedido._id = cursor.fetchone()[0]
 
-    def obtener_todos(self, libros, clientes):
+    def obtener_todos(self, libros, clientes, connection=None):
         """Retorna una lista de todos los pedidos de la base de datos."""
-        with get_connection() as conn:
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT id, libro_id, cliente_dni, cantidad, metodo_entrega, estado, fecha FROM pedidos")
                 filas = cursor.fetchall()
@@ -41,17 +39,17 @@ class PedidoRepository:
                 pedidos.append(pedido)
         return pedidos
 
-    def actualizar_estado(self, pedido_id, nuevo_estado):
+    def actualizar_estado(self, pedido_id, nuevo_estado, connection=None):
         """Actualiza el estado de un pedido en la base de datos."""
-        with get_connection() as conn:
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE pedidos SET estado = %s WHERE id = %s
                 """, (nuevo_estado, pedido_id))
-                
-    def buscar_por_id(self, id_pedido, libros, clientes):
+
+    def buscar_por_id(self, id_pedido, libros, clientes, connection=None):
         """Busca un pedido por su id."""
-        with get_connection() as conn:
+        with managed_connection(connection) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT id, libro_id, cliente_dni, cantidad, metodo_entrega, estado, fecha FROM pedidos WHERE id = %s", (id_pedido,))
                 f = cursor.fetchone()

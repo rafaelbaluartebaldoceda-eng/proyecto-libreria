@@ -1,58 +1,47 @@
-# 📚 Sistema de Gestión de Librería
+# Sistema de Gestion de Libreria
 
-## 📋 Descripción
-Sistema de gestión de librería desarrollado en Python aplicando programación orientada a objetos, validaciones y arquitectura limpia. Incluye interfaz CLI funcional con persistencia completa en PostgreSQL y arquitectura por capas profesional.
+## Descripcion
+Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas y pedidos en una libreria. Esta fase mantiene una interfaz CLI, pero ya trabaja con persistencia completa en PostgreSQL, validaciones de dominio y separacion por capas para preparar la siguiente etapa con FastAPI.
 
-## 🛠️ Tecnologías
+## Tecnologias
 - Python 3
 - PostgreSQL 17+
 - psycopg2-binary
 
-## 🧠 Conceptos aplicados
-- Encapsulamiento con atributos privados
-- Properties y setters
-- Validaciones con manejo de errores
-- Métodos de dominio (`reducir_stock`, `aumentar_stock`, `marcar_como_frecuente`)
-- Arquitectura modular (models / services / repositories / database)
-- Composición de objetos (Venta y Pedido usan Libro y Cliente)
-- Generación automática de IDs con SERIAL en PostgreSQL
-- Registro de fechas con `datetime`
-- Separación de capas profesional
-- Lógica de negocio en services
-- Persistencia en PostgreSQL con `psycopg2`
-- Context managers para manejo seguro de conexiones
-- Patrón Repository para acceso a datos
-- Queries SQL con JOIN, ON CONFLICT, RETURNING
-- Interfaz CLI con menú de administrador y usuario
+## Arquitectura actual
+- `models/`: entidades del dominio y validaciones
+- `services/`: logica de negocio reutilizable
+- `repositories/`: acceso a datos con SQL
+- `database/`: configuracion y manejo de conexiones/transacciones
+- `main.py`: interfaz CLI y flujo de consola
+- `tests/`: pruebas automaticas base
 
-## 📁 Estructura
-```
-proyecto-libreria/
-├── models/
-│   ├── libro.py
-│   ├── cliente.py
-│   ├── venta.py
-│   └── pedido.py
-├── services/
-│   ├── venta_service.py
-│   └── pedido_service.py
-├── repositories/
-│   ├── libro_repository.py
-│   ├── cliente_repository.py
-│   ├── venta_repository.py
-│   └── pedido_repository.py
-├── database/
-│   └── connection.py
-├── main.py
-└── README.md
+## Estado del proyecto
+- Fase 1 completada: CLI con persistencia en JSON
+- Fase 2 completada: migracion a PostgreSQL y cierre tecnico del backend base
+- Proxima fase: API REST con FastAPI reutilizando la capa de servicios
+
+La persistencia JSON de la Fase 1 ya no forma parte del flujo principal y se conserva solo como parte del historial del proyecto.
+
+## Configuracion
+1. Crear un entorno virtual opcional.
+2. Instalar dependencias:
+
+```bash
+pip install -r requirements.txt
 ```
 
-## ⚙️ Requisitos
-- Python 3.x
-- PostgreSQL 17+
-- psycopg2-binary
+3. Crear un archivo `.env` tomando como referencia `.env.example`:
 
-## 🗄️ Configuración de base de datos
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=libreria
+DB_USER=postgres
+DB_PASSWORD=tu_password_aqui
+```
+
+## Esquema de base de datos
 ```sql
 CREATE DATABASE libreria;
 
@@ -92,33 +81,55 @@ CREATE TABLE pedidos (
 );
 ```
 
-## ▶️ Cómo ejecutar
+## Como ejecutar
 ```bash
-pip install psycopg2-binary
 python main.py
 ```
 
-## 🖥️ Funcionalidades
-**Menú Administrador:**
+Al iniciar, el sistema precarga libros y clientes si la base de datos aun esta vacia.
+En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 main.py`.
+
+## Funcionalidades CLI
+### Menu Administrador
 - Registrar libro
 - Registrar venta
-- Reporte de stock
-- Reporte de clientes frecuentes
-- Reporte de ventas
-- Reporte de pedidos
+- Ver reporte de stock
+- Ver clientes frecuentes
+- Ver reporte de ventas
+- Ver reporte de pedidos
 
-**Menú Usuario:**
+### Menu Usuario
 - Registrar cliente
 - Realizar pedido
 - Ver stock de libros
 
-## 📈 Estado
-✅ Fase 1 — Sistema CLI con persistencia en JSON
-✅ Fase 2 — Migración a PostgreSQL completada
+## Mejoras cerradas en esta fase
+- Configuracion de base de datos por variables de entorno
+- Manejo de transacciones para ventas y entrega de pedidos
+- Eliminacion de dependencias activas de la fase JSON
+- Separacion mas clara entre CLI y logica reutilizable
+- Pruebas automaticas minimas para dominio, servicios y conexion
 
-**Próxima fase:**
-🔜 Fase 3 — API REST con FastAPI
+## Validacion final de la Fase 2
+Antes de dar por cerrada esta fase, el proyecto paso por una etapa final de revision tecnica y fortalecimiento del codigo. Esta validacion incluyo pruebas manuales de funcionamiento del sistema y una revision asistida por herramientas de IA enfocada en detectar puntos debiles de la implementacion.
 
-## 🎯 Objetivo del proyecto
-Este proyecto forma parte de mi proceso de aprendizaje para convertirme en desarrollador backend, aplicando buenas prácticas y diseño de software escalable.
+La asistencia de IA se utilizo como herramienta de apoyo para auditoria y mejora tecnica, no como sustituto del desarrollo del proyecto. Su uso estuvo orientado a:
+- revisar validaciones y restricciones del dominio
+- identificar riesgos de consistencia en operaciones con PostgreSQL
+- detectar posibles errores de configuracion y conexion con la base de datos
+- revisar compatibilidad de ejecucion en entornos virtuales y escenarios distintos al entorno local original
+- limpiar artefactos, carpetas y archivos residuales dentro de la arquitectura del proyecto
+- mejorar la separacion entre la capa CLI, la logica de negocio y la persistencia
+- reforzar la documentacion final y dejar una base mas preparada para la siguiente fase con FastAPI
+
+Como resultado, la Fase 2 queda cerrada con una base mas consistente, portable y mantenible, manteniendo el proyecto como un trabajo de aprendizaje progresivo construido por etapas.
+
+## Ejecutar pruebas
+```bash
+python -m unittest discover -s tests -v
 ```
+
+En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 -m unittest discover -s tests -v`.
+
+## Objetivo de aprendizaje
+Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. La meta de esta fase es cerrar una base funcional y consistente antes de evolucionar el sistema a una API REST con FastAPI.

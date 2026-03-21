@@ -4,8 +4,8 @@ from models.cliente import Cliente
 
 class Venta:
     """Entidad que representa una venta en el sistema de libreria."""
-    _contador_de_venta = 0
-    def __init__(self, libro, cliente, cantidad):
+
+    def __init__(self, libro, cliente, cantidad, venta_id=None, fecha=None):
         """Inicializa una venta con libro, cliente y cantidad."""
         if not isinstance(libro, Libro):
             raise TypeError("El libro debe ser una instancia de Libro")
@@ -16,12 +16,11 @@ class Venta:
         if cantidad > libro.stock:
             raise ValueError("Stock insuficiente para realizar la venta")
         libro.reducir_stock(cantidad)
-        Venta._contador_de_venta += 1
-        self._id = Venta._contador_de_venta
+        self._id = venta_id
         self._libro = libro
         self._cliente = cliente
         self._cantidad = cantidad
-        self._fecha = datetime.now()
+        self._fecha = fecha or datetime.now()
     @property
     def id(self):
         """Devuelve el id unico de la venta"""
@@ -59,12 +58,15 @@ class Venta:
     @classmethod
     def from_dict(cls, data, libro, cliente):
         """Reconstruye una Venta desde un diccionario."""
+        fecha = data["fecha"]
+        if isinstance(fecha, str):
+            fecha = datetime.fromisoformat(fecha)
         venta = cls.__new__(cls)
         venta._id = data["id"]
         venta._libro = libro
         venta._cliente = cliente
         venta._cantidad = data["cantidad"]
-        venta._fecha = datetime.fromisoformat(data["fecha"])
+        venta._fecha = fecha
         return venta
     def __str__(self):
         """Retorna la informacion de la venta de forma legible"""
