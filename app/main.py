@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from app.routers.clientes import router as clientes_router
 from app.routers.libros import router as libros_router
 
 
@@ -19,3 +20,4 @@ def home():
 
 
 app.include_router(libros_router)
+app.include_router(clientes_router)
