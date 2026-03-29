@@ -6,6 +6,8 @@ Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas 
 ## Tecnologias
 - Python 3
 - PostgreSQL 17+
+- FastAPI
+- Uvicorn
 - psycopg2-binary
 
 ## Arquitectura actual
@@ -14,12 +16,13 @@ Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas 
 - `repositories/`: acceso a datos con SQL
 - `database/`: configuracion y manejo de conexiones/transacciones
 - `main.py`: interfaz CLI y flujo de consola
+- `app/`: capa HTTP de FastAPI con routers, schemas y dependencias
 - `tests/`: pruebas automaticas base
 
 ## Estado del proyecto
 - Fase 1 completada: CLI con persistencia en JSON
 - Fase 2 completada: migracion a PostgreSQL y cierre tecnico del backend base
-- Proxima fase: API REST con FastAPI reutilizando la capa de servicios
+- Fase 3 en progreso: primera integracion de FastAPI reutilizando la capa de servicios
 
 La persistencia JSON de la Fase 1 ya no forma parte del flujo principal y se conserva solo como parte del historial del proyecto.
 
@@ -89,6 +92,21 @@ python main.py
 Al iniciar, el sistema precarga libros y clientes si la base de datos aun esta vacia.
 En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 main.py`.
 
+## Como ejecutar la API
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+En Windows, si `python` no esta disponible en PATH, puedes usar:
+
+```bash
+py -3 -m uvicorn app.main:app --reload
+```
+
+Una vez levantada la API, la documentacion interactiva estara disponible en:
+- `http://127.0.0.1:8000/docs`
+- `http://127.0.0.1:8000/redoc`
+
 ## Funcionalidades CLI
 ### Menu Administrador
 - Registrar libro
@@ -109,6 +127,14 @@ En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 main.py`.
 - Eliminacion de dependencias activas de la fase JSON
 - Separacion mas clara entre CLI y logica reutilizable
 - Pruebas automaticas minimas para dominio, servicios y conexion
+
+## Avance actual de la Fase 3
+- Integracion inicial de FastAPI sin reemplazar la CLI existente
+- Creacion de la capa `app/` con `main.py`, `dependencies.py`, `routers/` y `schemas/`
+- Primer router funcional para `libros`
+- Schemas Pydantic de entrada y salida para libros
+- Manejo de respuestas HTTP con `response_model`, `status_code` y `HTTPException`
+- Pruebas automaticas iniciales para endpoints de libros
 
 ## Validacion final de la Fase 2
 Antes de dar por cerrada esta fase, el proyecto paso por una etapa final de revision tecnica y fortalecimiento del codigo. Esta validacion incluyo pruebas manuales de funcionamiento del sistema y una revision asistida por herramientas de IA enfocada en detectar puntos debiles de la implementacion.
