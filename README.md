@@ -131,10 +131,10 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 ## Avance actual de la Fase 3
 - Integracion inicial de FastAPI sin reemplazar la CLI existente
 - Creacion de la capa `app/` con `main.py`, `dependencies.py`, `routers/` y `schemas/`
-- Routers funcionales para `libros`, `clientes` y `ventas`
-- Schemas Pydantic de entrada y salida para libros, clientes y ventas
+- Routers funcionales para `libros`, `clientes`, `ventas` y `pedidos`
+- Schemas Pydantic de entrada y salida para libros, clientes, ventas y pedidos
 - Manejo de respuestas HTTP con `response_model`, `status_code` y `HTTPException`
-- Pruebas automaticas iniciales para endpoints de libros y ventas
+- Pruebas automaticas iniciales para endpoints de libros, ventas y pedidos
 - Documentacion interactiva activa en `/docs` para validar endpoints durante el desarrollo
 
 ## Validacion final de la Fase 2
