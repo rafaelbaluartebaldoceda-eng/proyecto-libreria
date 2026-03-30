@@ -2,7 +2,9 @@
 
 from repositories.cliente_repository import ClienteRepository
 from repositories.libro_repository import LibroRepository
+from repositories.venta_repository import VentaRepository
 from services.libreria_service import LibreriaService
+from services.venta_service import VentaService
 
 
 def get_libreria_service():
@@ -10,3 +12,11 @@ def get_libreria_service():
     libro_repo = LibroRepository()
     cliente_repo = ClienteRepository()
     return LibreriaService(libro_repo, cliente_repo)
+
+
+def get_venta_service():
+    """Construye y retorna el servicio principal de ventas para la API."""
+    libro_repo = LibroRepository()
+    cliente_repo = ClienteRepository()
+    venta_repo = VentaRepository()
+    return VentaService(venta_repo, libro_repo, cliente_repo)
