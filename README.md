@@ -1,7 +1,7 @@
 # Sistema de Gestion de Libreria
 
 ## Descripcion
-Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas y pedidos en una libreria. Esta fase mantiene una interfaz CLI, pero ya trabaja con persistencia completa en PostgreSQL, validaciones de dominio y separacion por capas para preparar la siguiente etapa con FastAPI.
+Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas y pedidos en una libreria. El proyecto mantiene una interfaz CLI y ahora tambien expone una API REST con FastAPI, trabajando sobre PostgreSQL, validaciones de dominio y separacion por capas.
 
 ## Tecnologias
 - Python 3
@@ -97,7 +97,7 @@ En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 main.py`.
 python -m uvicorn app.main:app --reload
 ```
 
-En Windows, si `python` no esta disponible en PATH, puedes usar:
+Si trabajas dentro de un entorno virtual activo, este es el comando recomendado. En Windows, si `python` no esta disponible en PATH, puedes usar:
 
 ```bash
 py -3 -m uvicorn app.main:app --reload
@@ -128,7 +128,7 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 - Separacion mas clara entre CLI y logica reutilizable
 - Pruebas automaticas minimas para dominio, servicios y conexion
 
-## Avance actual de la Fase 3
+## Cierre de la Fase 3
 - Integracion de FastAPI sin reemplazar la CLI existente
 - Creacion de la capa `app/` con `main.py`, `dependencies.py`, `routers/` y `schemas/`
 - Routers funcionales para `libros`, `clientes`, `ventas` y `pedidos`
@@ -136,6 +136,7 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 - Manejo de respuestas HTTP con `response_model`, `status_code` y `HTTPException`
 - Pruebas automaticas para endpoints de libros, clientes, ventas y pedidos
 - Documentacion interactiva activa en `/docs` para validar endpoints durante el desarrollo
+- Validacion local completada con 31 pruebas automaticas en estado `OK`
 
 ## Recursos API disponibles
 - `GET /`
@@ -171,7 +172,7 @@ Como resultado, la Fase 2 queda cerrada con una base mas consistente, portable y
 python -m unittest discover -s tests -v
 ```
 
-En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 -m unittest discover -s tests -v`.
+Si trabajas dentro del entorno virtual, este es el comando recomendado. En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 -m unittest discover -s tests -v`.
 
 ## Objetivo de aprendizaje
-Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. La meta de esta fase es cerrar una base funcional y consistente antes de evolucionar el sistema a una API REST con FastAPI.
+Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. Con la Fase 3 cerrada, la siguiente etapa sera fortalecer la API con conceptos de nivel mas profesional como manejo global de errores, autenticacion, autorizacion y seguridad.
