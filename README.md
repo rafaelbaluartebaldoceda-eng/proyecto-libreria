@@ -22,7 +22,7 @@ Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas 
 ## Estado del proyecto
 - Fase 1 completada: CLI con persistencia en JSON
 - Fase 2 completada: migracion a PostgreSQL y cierre tecnico del backend base
-- Fase 3 en progreso: primera integracion de FastAPI reutilizando la capa de servicios
+- Fase 3 completada: integracion base de FastAPI reutilizando la capa de servicios
 
 La persistencia JSON de la Fase 1 ya no forma parte del flujo principal y se conserva solo como parte del historial del proyecto.
 
@@ -129,13 +129,28 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 - Pruebas automaticas minimas para dominio, servicios y conexion
 
 ## Avance actual de la Fase 3
-- Integracion inicial de FastAPI sin reemplazar la CLI existente
+- Integracion de FastAPI sin reemplazar la CLI existente
 - Creacion de la capa `app/` con `main.py`, `dependencies.py`, `routers/` y `schemas/`
 - Routers funcionales para `libros`, `clientes`, `ventas` y `pedidos`
 - Schemas Pydantic de entrada y salida para libros, clientes, ventas y pedidos
 - Manejo de respuestas HTTP con `response_model`, `status_code` y `HTTPException`
-- Pruebas automaticas iniciales para endpoints de libros, ventas y pedidos
+- Pruebas automaticas para endpoints de libros, clientes, ventas y pedidos
 - Documentacion interactiva activa en `/docs` para validar endpoints durante el desarrollo
+
+## Recursos API disponibles
+- `GET /`
+- `GET /libros/`
+- `GET /libros/{id}`
+- `POST /libros/`
+- `GET /clientes/frecuentes`
+- `POST /clientes/`
+- `GET /ventas/`
+- `GET /ventas/{id}`
+- `POST /ventas/`
+- `GET /pedidos/`
+- `GET /pedidos/{id}`
+- `POST /pedidos/`
+- `PATCH /pedidos/{id}/estado`
 
 ## Validacion final de la Fase 2
 Antes de dar por cerrada esta fase, el proyecto paso por una etapa final de revision tecnica y fortalecimiento del codigo. Esta validacion incluyo pruebas manuales de funcionamiento del sistema y una revision asistida por herramientas de IA enfocada en detectar puntos debiles de la implementacion.

@@ -56,3 +56,17 @@ def actualizar_estado_pedido(
             else status.HTTP_400_BAD_REQUEST
         )
         raise HTTPException(status_code=status_code, detail=detail) from error
+
+@router.get("/{pedido_id}", response_model=PedidoResponse)
+def obtener_pedido(
+    pedido_id: int = Path(gt=0),
+    service: PedidoService = Depends(get_pedido_service),
+):
+    """Busca y retorna un pedido por su identificador."""
+    pedido = service.buscar_pedido_por_id(pedido_id)
+    if not pedido:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido no encontrado",
+        )
+    return pedido

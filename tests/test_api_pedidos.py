@@ -33,6 +33,13 @@ class FakePedidoService:
         """Retorna la lista simulada de pedidos."""
         return self._pedidos
 
+    def buscar_pedido_por_id(self, pedido_id):
+        """Busca un pedido por id en el catalogo simulado."""
+        for pedido in self._pedidos:
+            if pedido.id == pedido_id:
+                return pedido
+        return None
+
     def registrar_pedido(self, libro_id, cliente_dni, cantidad, metodo_entrega):
         """Registra un nuevo pedido simulado con datos minimos."""
         if libro_id == 999:
@@ -72,11 +79,13 @@ class PedidosApiTests(unittest.TestCase):
         app.dependency_overrides.clear()
 
     def test_listar_pedidos(self):
+        """Verifica que el endpoint de listado responda con pedidos simulados."""
         response = self.client.get("/pedidos/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
     def test_crear_pedido(self):
+        """Valida que se pueda registrar un pedido con datos correctos."""
         response = self.client.post(
             "/pedidos/",
             json={
@@ -90,6 +99,7 @@ class PedidosApiTests(unittest.TestCase):
         self.assertEqual(response.json()["estado"], "pendiente")
 
     def test_crear_pedido_con_libro_inexistente(self):
+        """Valida que la API retorne 404 si el libro no existe."""
         response = self.client.post(
             "/pedidos/",
             json={
@@ -103,6 +113,7 @@ class PedidosApiTests(unittest.TestCase):
         self.assertEqual(response.json()["detail"], "Libro no encontrado")
 
     def test_actualizar_estado_pedido(self):
+        """Verifica que el estado del pedido se actualice correctamente."""
         response = self.client.patch(
             "/pedidos/1/estado",
             json={"estado": "entregado"},
@@ -111,13 +122,25 @@ class PedidosApiTests(unittest.TestCase):
         self.assertEqual(response.json()["estado"], "entregado")
 
     def test_actualizar_estado_pedido_inexistente(self):
+        """Valida que la API retorne 404 al actualizar un pedido inexistente."""
         response = self.client.patch(
             "/pedidos/999/estado",
             json={"estado": "cancelado"},
         )
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Pedido no encontrado")
+    
+    def test_obtener_pedido_existente(self):
+        """Verifica que la API retorne un pedido existente por id."""
+        response = self.client.get("/pedidos/1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["id"], 1)
 
+    def test_obtener_pedido_inexistente(self):
+        """Verifica que la API retorne 404 para un pedido inexistente."""
+        response = self.client.get("/pedidos/999")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Pedido no encontrado")
 
 if __name__ == "__main__":
     unittest.main()
