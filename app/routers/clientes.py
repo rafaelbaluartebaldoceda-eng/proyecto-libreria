@@ -1,9 +1,12 @@
 """Endpoints HTTP para operaciones relacionadas con clientes."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.dependencies import get_libreria_service
 from app.schemas.cliente import ClienteCreate, ClienteResponse
+from app.security import require_admin
 from services.libreria_service import LibreriaService
 
 
@@ -12,9 +15,11 @@ router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
 @router.get("/frecuentes", response_model=list[ClienteResponse])
 def obtener_clientes_frecuentes(
+    admin_user: Annotated[object, Depends(require_admin)],
     service: LibreriaService = Depends(get_libreria_service),
 ):
     """Retorna la lista de clientes marcados como frecuentes."""
+    _ = admin_user
     return service.listar_clientes_frecuentes()
 
 

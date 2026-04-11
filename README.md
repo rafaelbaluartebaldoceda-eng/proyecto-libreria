@@ -1,7 +1,7 @@
 # Sistema de Gestion de Libreria
 
 ## Descripcion
-Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas y pedidos en una libreria. El proyecto mantiene una interfaz CLI y ahora tambien expone una API REST con FastAPI, trabajando sobre PostgreSQL, validaciones de dominio y separacion por capas.
+Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas, pedidos y usuarios autenticables en una libreria. El sistema mantiene una interfaz CLI y una API REST construida con FastAPI, trabajando sobre PostgreSQL, validaciones de dominio, autenticacion con JWT y separacion por capas.
 
 ## Tecnologias
 - Python 3
@@ -9,25 +9,29 @@ Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas 
 - FastAPI
 - Uvicorn
 - psycopg2-binary
+- python-jose
+- pwdlib + argon2-cffi
+- Pydantic
 
 ## Arquitectura actual
 - `models/`: entidades del dominio y validaciones
 - `services/`: logica de negocio reutilizable
 - `repositories/`: acceso a datos con SQL
-- `database/`: configuracion y manejo de conexiones/transacciones
+- `database/`: manejo de conexiones y transacciones
 - `main.py`: interfaz CLI y flujo de consola
-- `app/`: capa HTTP de FastAPI con routers, schemas y dependencias
-- `tests/`: pruebas automaticas base
+- `app/`: capa HTTP con FastAPI, routers, schemas, dependencias y seguridad
+- `tests/`: pruebas automaticas de dominio, servicios y API
 
 ## Estado del proyecto
-- Fase 1 completada: CLI con persistencia en JSON
+- Fase 1 completada: CLI con persistencia inicial
 - Fase 2 completada: migracion a PostgreSQL y cierre tecnico del backend base
 - Fase 3 completada: integracion base de FastAPI reutilizando la capa de servicios
+- Fase 4A completada: autenticacion, autorizacion por rol y proteccion de rutas con JWT
 
-La persistencia JSON de la Fase 1 ya no forma parte del flujo principal y se conserva solo como parte del historial del proyecto.
+La version actual fue validada localmente con **49 pruebas automaticas en estado OK**.
 
 ## Configuracion
-1. Crear un entorno virtual opcional.
+1. Crear y activar un entorno virtual.
 2. Instalar dependencias:
 
 ```bash
@@ -42,6 +46,9 @@ DB_PORT=5432
 DB_NAME=libreria
 DB_USER=postgres
 DB_PASSWORD=tu_password_aqui
+SECRET_KEY=tu_clave_super_secreta_y_larga_de_al_menos_32_caracteres
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+ADMIN_BOOTSTRAP_TOKEN=crea_un_token_unico_y_largo_para_el_primer_admin
 ```
 
 ## Esquema de base de datos
@@ -82,97 +89,85 @@ CREATE TABLE pedidos (
     estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
     fecha TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'user',
+    activo BOOLEAN NOT NULL DEFAULT TRUE
+);
 ```
 
-## Como ejecutar
+## Como ejecutar la CLI
 ```bash
 python main.py
 ```
-
-Al iniciar, el sistema precarga libros y clientes si la base de datos aun esta vacia.
-En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 main.py`.
 
 ## Como ejecutar la API
 ```bash
 python -m uvicorn app.main:app --reload
 ```
 
-Si trabajas dentro de un entorno virtual activo, este es el comando recomendado. En Windows, si `python` no esta disponible en PATH, puedes usar:
-
-```bash
-py -3 -m uvicorn app.main:app --reload
-```
-
 Una vez levantada la API, la documentacion interactiva estara disponible en:
 - `http://127.0.0.1:8000/docs`
 - `http://127.0.0.1:8000/redoc`
 
-## Funcionalidades CLI
-### Menu Administrador
-- Registrar libro
-- Registrar venta
-- Ver reporte de stock
-- Ver clientes frecuentes
-- Ver reporte de ventas
-- Ver reporte de pedidos
+## Flujo de seguridad
+- `POST /auth/bootstrap-admin`: crea el primer administrador usando `ADMIN_BOOTSTRAP_TOKEN`. Solo funciona si aun no existe un admin activo.
+- `POST /auth/register`: registra un usuario comun con rol `user`.
+- `POST /auth/users`: permite a un admin crear usuarios con rol explicito.
+- `POST /token`: autentica un usuario y retorna un JWT Bearer.
+- `GET /users/me`: devuelve el perfil del usuario autenticado.
 
-### Menu Usuario
-- Registrar cliente
-- Realizar pedido
-- Ver stock de libros
-
-## Mejoras cerradas en esta fase
-- Configuracion de base de datos por variables de entorno
-- Manejo de transacciones para ventas y entrega de pedidos
-- Eliminacion de dependencias activas de la fase JSON
-- Separacion mas clara entre CLI y logica reutilizable
-- Pruebas automaticas minimas para dominio, servicios y conexion
-
-## Cierre de la Fase 3
-- Integracion de FastAPI sin reemplazar la CLI existente
-- Creacion de la capa `app/` con `main.py`, `dependencies.py`, `routers/` y `schemas/`
-- Routers funcionales para `libros`, `clientes`, `ventas` y `pedidos`
-- Schemas Pydantic de entrada y salida para libros, clientes, ventas y pedidos
-- Manejo de respuestas HTTP con `response_model`, `status_code` y `HTTPException`
-- Pruebas automaticas para endpoints de libros, clientes, ventas y pedidos
-- Documentacion interactiva activa en `/docs` para validar endpoints durante el desarrollo
-- Validacion local completada con 31 pruebas automaticas en estado `OK`
+### Consideraciones de seguridad
+- Las contrasenas se almacenan hasheadas, nunca en texto plano.
+- El JWT usa `sub` como identificador principal y `role` para autorizacion por rol.
+- Las rutas protegidas devuelven `401` si el token falta o es invalido.
+- Las rutas administrativas devuelven `403` si el usuario autenticado no es admin.
+- El bootstrap del primer admin se bloquea automaticamente cuando ya existe un administrador activo.
 
 ## Recursos API disponibles
+
+### Publicos
 - `GET /`
 - `GET /libros/`
 - `GET /libros/{id}`
+- `POST /clientes/`
+- `POST /pedidos/`
+- `POST /auth/bootstrap-admin`
+- `POST /auth/register`
+- `POST /token`
+
+### Autenticados
+- `GET /users/me`
+
+### Solo admin
+- `POST /auth/users`
 - `POST /libros/`
 - `GET /clientes/frecuentes`
-- `POST /clientes/`
 - `GET /ventas/`
 - `GET /ventas/{id}`
 - `POST /ventas/`
 - `GET /pedidos/`
 - `GET /pedidos/{id}`
-- `POST /pedidos/`
 - `PATCH /pedidos/{id}/estado`
 
-## Validacion final de la Fase 2
-Antes de dar por cerrada esta fase, el proyecto paso por una etapa final de revision tecnica y fortalecimiento del codigo. Esta validacion incluyo pruebas manuales de funcionamiento del sistema y una revision asistida por herramientas de IA enfocada en detectar puntos debiles de la implementacion.
-
-La asistencia de IA se utilizo como herramienta de apoyo para auditoria y mejora tecnica, no como sustituto del desarrollo del proyecto. Su uso estuvo orientado a:
-- revisar validaciones y restricciones del dominio
-- identificar riesgos de consistencia en operaciones con PostgreSQL
-- detectar posibles errores de configuracion y conexion con la base de datos
-- revisar compatibilidad de ejecucion en entornos virtuales y escenarios distintos al entorno local original
-- limpiar artefactos, carpetas y archivos residuales dentro de la arquitectura del proyecto
-- mejorar la separacion entre la capa CLI, la logica de negocio y la persistencia
-- reforzar la documentacion final y dejar una base mas preparada para la siguiente fase con FastAPI
-
-Como resultado, la Fase 2 queda cerrada con una base mas consistente, portable y mantenible, manteniendo el proyecto como un trabajo de aprendizaje progresivo construido por etapas.
+## Validaciones implementadas
+- Modelos de dominio con reglas de negocio para libros, clientes, ventas, pedidos y usuarios
+- Schemas Pydantic para validar cuerpos HTTP y tipos de respuesta
+- Validacion de `dni` con 8 digitos
+- Validacion de usernames con letras, numeros y guion bajo
+- Validacion de correo con `EmailStr` y normalizacion del email en el servicio
+- Validacion de contrasenas con longitud minima, letras y numeros
+- Validacion de tokens JWT firmados y con expiracion
+- Proteccion de rutas con dependencias de FastAPI (`get_current_user`, `require_admin`)
 
 ## Ejecutar pruebas
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Si trabajas dentro del entorno virtual, este es el comando recomendado. En Windows, si `python` no esta disponible en PATH, puedes usar `py -3 -m unittest discover -s tests -v`.
-
 ## Objetivo de aprendizaje
-Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. Con la Fase 3 cerrada, la siguiente etapa sera fortalecer la API con conceptos de nivel mas profesional como manejo global de errores, autenticacion, autorizacion y seguridad.
+Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. Con la Fase 4A cerrada, la siguiente etapa prevista es profundizar la capa de persistencia y evolucionar el acceso a datos con herramientas mas avanzadas como ORM y migraciones.

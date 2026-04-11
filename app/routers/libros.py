@@ -1,9 +1,12 @@
 """Endpoints HTTP para operaciones relacionadas con libros."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 
 from app.dependencies import get_libreria_service
 from app.schemas.libro import LibroCreate, LibroResponse
+from app.security import require_admin
 from services.libreria_service import LibreriaService
 
 
@@ -34,9 +37,11 @@ def obtener_libro(
 @router.post("/", response_model=LibroResponse, status_code=status.HTTP_201_CREATED)
 def crear_libro(
     libro: LibroCreate,
+    admin_user: Annotated[object, Depends(require_admin)],
     service: LibreriaService = Depends(get_libreria_service),
 ):
     """Registra un nuevo libro usando la logica existente de la aplicacion."""
+    _ = admin_user
     try:
         return service.registrar_libro(
             libro.id,

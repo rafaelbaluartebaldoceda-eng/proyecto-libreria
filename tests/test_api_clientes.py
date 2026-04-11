@@ -4,9 +4,10 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_libreria_service
+from app.dependencies import get_auth_service, get_libreria_service
 from app.main import app
 from models.cliente import Cliente
+from auth_test_utils import FakeAuthService, build_auth_headers
 
 
 class FakeLibreriaClientesService:
@@ -37,7 +38,9 @@ class ClientesApiTests(unittest.TestCase):
 
     def setUp(self):
         self.fake_service = FakeLibreriaClientesService()
+        self.fake_auth_service = FakeAuthService()
         app.dependency_overrides[get_libreria_service] = lambda: self.fake_service
+        app.dependency_overrides[get_auth_service] = lambda: self.fake_auth_service
         self.client = TestClient(app)
 
     def tearDown(self):
@@ -45,7 +48,10 @@ class ClientesApiTests(unittest.TestCase):
 
     def test_obtener_clientes_frecuentes(self):
         """Verifica que el endpoint retorne solo clientes frecuentes."""
-        response = self.client.get("/clientes/frecuentes")
+        response = self.client.get(
+            "/clientes/frecuentes",
+            headers=build_auth_headers(),
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]["dni"], "12345678")

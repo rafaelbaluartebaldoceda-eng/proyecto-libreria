@@ -5,8 +5,9 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_pedido_service
+from app.dependencies import get_auth_service, get_pedido_service
 from app.main import app
+from auth_test_utils import FakeAuthService, build_auth_headers
 
 
 class FakePedidoData:
@@ -72,7 +73,9 @@ class PedidosApiTests(unittest.TestCase):
 
     def setUp(self):
         self.fake_service = FakePedidoService()
+        self.fake_auth_service = FakeAuthService()
         app.dependency_overrides[get_pedido_service] = lambda: self.fake_service
+        app.dependency_overrides[get_auth_service] = lambda: self.fake_auth_service
         self.client = TestClient(app)
 
     def tearDown(self):
@@ -80,7 +83,7 @@ class PedidosApiTests(unittest.TestCase):
 
     def test_listar_pedidos(self):
         """Verifica que el endpoint de listado responda con pedidos simulados."""
-        response = self.client.get("/pedidos/")
+        response = self.client.get("/pedidos/", headers=build_auth_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
@@ -117,6 +120,7 @@ class PedidosApiTests(unittest.TestCase):
         response = self.client.patch(
             "/pedidos/1/estado",
             json={"estado": "entregado"},
+            headers=build_auth_headers(),
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["estado"], "entregado")
@@ -126,19 +130,20 @@ class PedidosApiTests(unittest.TestCase):
         response = self.client.patch(
             "/pedidos/999/estado",
             json={"estado": "cancelado"},
+            headers=build_auth_headers(),
         )
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Pedido no encontrado")
     
     def test_obtener_pedido_existente(self):
         """Verifica que la API retorne un pedido existente por id."""
-        response = self.client.get("/pedidos/1")
+        response = self.client.get("/pedidos/1", headers=build_auth_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["id"], 1)
 
     def test_obtener_pedido_inexistente(self):
         """Verifica que la API retorne 404 para un pedido inexistente."""
-        response = self.client.get("/pedidos/999")
+        response = self.client.get("/pedidos/999", headers=build_auth_headers())
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Pedido no encontrado")
 

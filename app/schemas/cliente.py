@@ -18,7 +18,7 @@ class ClienteResponse(BaseModel):
 class ClienteCreate(BaseModel):
     """Representa la estructura HTTP de entrada para registrar un cliente."""
 
-    dni: str = Field(min_length=8, max_length=8)
+    dni: str = Field(min_length=8, max_length=8, pattern=r"^\d{8}$")
     nombre: str = Field(min_length=1, max_length=100)
     direccion: str = Field(min_length=1, max_length=150)
     correo: str = Field(min_length=1, max_length=100)

@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from models.cliente import Cliente
 from models.libro import Libro
 from models.pedido import Pedido
+from models.usuario import Usuario
+from services.auth_service import AuthService
 from services.libreria_service import LibreriaService
 from services.pedido_service import PedidoService
 from services.venta_service import VentaService
@@ -80,6 +82,32 @@ class FakePedidoRepo:
     def actualizar_estado(self, pedido_id, nuevo_estado, connection=None):
         self.calls.append(("actualizar_estado", connection))
         self.updated_states.append((pedido_id, nuevo_estado))
+
+
+class FakeUsuarioRepo:
+    def __init__(self):
+        self.users_by_username = {}
+        self.users_by_email = {}
+        self.saved_users = []
+
+    def buscar_por_username(self, username, connection=None):
+        return self.users_by_username.get(username)
+
+    def buscar_por_email(self, email, connection=None):
+        return self.users_by_email.get(email)
+
+    def guardar(self, usuario, connection=None):
+        usuario._id = len(self.saved_users) + 1
+        self.saved_users.append(usuario)
+        self.users_by_username[usuario.username] = usuario
+        self.users_by_email[usuario.email] = usuario
+        return usuario
+
+    def existe_admin_activo(self, connection=None):
+        return any(
+            usuario.role == "admin" and usuario.activo
+            for usuario in self.saved_users
+        )
 
 
 class ServiceTests(unittest.TestCase):
@@ -167,6 +195,64 @@ class ServiceTests(unittest.TestCase):
         self.assertTrue(all(call[1] is token for call in libro_repo.calls))
         self.assertTrue(all(call[1] is token for call in cliente_repo.calls))
         self.assertTrue(all(call[1] is token for call in pedido_repo.calls))
+
+    def test_auth_service_registra_y_autentica_usuario(self):
+        usuario_repo = FakeUsuarioRepo()
+        service = AuthService(usuario_repo)
+        token = object()
+
+        @contextmanager
+        def fake_transaction():
+            yield token
+
+        from unittest.mock import patch
+
+        with patch("services.auth_service.managed_connection", fake_transaction):
+            usuario = service.registrar_usuario(
+                "admin",
+                "admin@example.com",
+                "admin1234",
+                role="admin",
+            )
+            autenticado = service.autenticar_usuario("admin", "admin1234")
+
+        self.assertIsNotNone(usuario.id)
+        self.assertNotEqual(usuario.hashed_password, "admin1234")
+        self.assertEqual(autenticado.username, "admin")
+
+    def test_auth_service_rechaza_username_duplicado(self):
+        usuario_repo = FakeUsuarioRepo()
+        service = AuthService(usuario_repo)
+        existente = Usuario("admin", "admin@example.com", "x" * 30, role="admin")
+        usuario_repo.guardar(existente)
+        token = object()
+
+        @contextmanager
+        def fake_transaction():
+            yield token
+
+        from unittest.mock import patch
+
+        with patch("services.auth_service.managed_connection", fake_transaction):
+            with self.assertRaises(ValueError):
+                service.registrar_usuario("admin", "otro@example.com", "admin1234")
+
+    def test_auth_service_detecta_admin_activo(self):
+        usuario_repo = FakeUsuarioRepo()
+        service = AuthService(usuario_repo)
+        usuario_repo.guardar(
+            Usuario("admin", "admin@example.com", "x" * 30, role="admin")
+        )
+        token = object()
+
+        @contextmanager
+        def fake_transaction():
+            yield token
+
+        from unittest.mock import patch
+
+        with patch("services.auth_service.managed_connection", fake_transaction):
+            self.assertTrue(service.existe_admin_activo())
 
 
 if __name__ == "__main__":

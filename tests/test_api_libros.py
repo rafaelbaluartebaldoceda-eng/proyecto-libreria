@@ -4,9 +4,10 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_libreria_service
+from app.dependencies import get_auth_service, get_libreria_service
 from app.main import app
 from models.libro import Libro
+from auth_test_utils import FakeAuthService, build_auth_headers
 
 
 class FakeLibreriaService:
@@ -43,7 +44,9 @@ class LibrosApiTests(unittest.TestCase):
 
     def setUp(self):
         self.fake_service = FakeLibreriaService()
+        self.fake_auth_service = FakeAuthService()
         app.dependency_overrides[get_libreria_service] = lambda: self.fake_service
+        app.dependency_overrides[get_auth_service] = lambda: self.fake_auth_service
         self.client = TestClient(app)
 
     def tearDown(self):
@@ -80,6 +83,7 @@ class LibrosApiTests(unittest.TestCase):
                 "precio": 90,
                 "stock": 7,
             },
+            headers=build_auth_headers(),
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["id"], 200)
@@ -95,6 +99,7 @@ class LibrosApiTests(unittest.TestCase):
                 "precio": 20,
                 "stock": 1,
             },
+            headers=build_auth_headers(),
         )
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.json()["detail"], "Ya existe un libro con ese ID.")

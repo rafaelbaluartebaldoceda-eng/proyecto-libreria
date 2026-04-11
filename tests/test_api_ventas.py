@@ -5,8 +5,9 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_venta_service
+from app.dependencies import get_auth_service, get_venta_service
 from app.main import app
+from auth_test_utils import FakeAuthService, build_auth_headers
 
 
 class FakeVentaData:
@@ -60,24 +61,26 @@ class VentasApiTests(unittest.TestCase):
 
     def setUp(self):
         self.fake_service = FakeVentaService()
+        self.fake_auth_service = FakeAuthService()
         app.dependency_overrides[get_venta_service] = lambda: self.fake_service
+        app.dependency_overrides[get_auth_service] = lambda: self.fake_auth_service
         self.client = TestClient(app)
 
     def tearDown(self):
         app.dependency_overrides.clear()
 
     def test_listar_ventas(self):
-        response = self.client.get("/ventas/")
+        response = self.client.get("/ventas/", headers=build_auth_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 2)
 
     def test_obtener_venta_existente(self):
-        response = self.client.get("/ventas/1")
+        response = self.client.get("/ventas/1", headers=build_auth_headers())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["id"], 1)
 
     def test_obtener_venta_inexistente(self):
-        response = self.client.get("/ventas/999")
+        response = self.client.get("/ventas/999", headers=build_auth_headers())
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Venta no encontrada")
 
@@ -89,6 +92,7 @@ class VentasApiTests(unittest.TestCase):
                 "cliente_dni": "12345678",
                 "cantidad": 3,
             },
+            headers=build_auth_headers(),
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["cantidad"], 3)
@@ -101,6 +105,7 @@ class VentasApiTests(unittest.TestCase):
                 "cliente_dni": "12345678",
                 "cantidad": 1,
             },
+            headers=build_auth_headers(),
         )
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Libro no encontrado")

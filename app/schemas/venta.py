@@ -9,7 +9,7 @@ class VentaCreate(BaseModel):
     """Representa la estructura HTTP de entrada para registrar una venta."""
 
     libro_id: int = Field(gt=0)
-    cliente_dni: str = Field(min_length=8, max_length=8)
+    cliente_dni: str = Field(min_length=8, max_length=8, pattern=r"^\d{8}$")
     cantidad: int = Field(gt=0)
 
     model_config = {

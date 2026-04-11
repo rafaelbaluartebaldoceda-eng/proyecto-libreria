@@ -3,6 +3,7 @@ import unittest
 from models.cliente import Cliente
 from models.libro import Libro
 from models.pedido import Pedido
+from models.usuario import Usuario
 from models.venta import Venta
 
 
@@ -35,7 +36,14 @@ class DomainModelTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Cliente("1234", "Ana", "ana@mail.com", "Lima")
 
+    def test_usuario_valida_rol(self):
+        with self.assertRaises(ValueError):
+            Usuario("admin", "admin@example.com", "x" * 30, role="superadmin")
+
+    def test_usuario_valida_hash(self):
+        with self.assertRaises(ValueError):
+            Usuario("admin", "admin@example.com", "corto", role="admin")
+
 
 if __name__ == "__main__":
     unittest.main()
-

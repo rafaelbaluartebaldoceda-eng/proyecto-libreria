@@ -1,9 +1,12 @@
 """Endpoints HTTP para operaciones relacionadas con pedidos."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 
 from app.dependencies import get_pedido_service
 from app.schemas.pedido import PedidoCreate, PedidoEstadoUpdate, PedidoResponse
+from app.security import require_admin
 from services.pedido_service import PedidoService
 
 
@@ -11,8 +14,12 @@ router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 
 
 @router.get("/", response_model=list[PedidoResponse])
-def listar_pedidos(service: PedidoService = Depends(get_pedido_service)):
+def listar_pedidos(
+    admin_user: Annotated[object, Depends(require_admin)],
+    service: PedidoService = Depends(get_pedido_service),
+):
     """Lista todos los pedidos registrados en el sistema."""
+    _ = admin_user
     return service.listar_pedidos()
 
 
@@ -42,10 +49,12 @@ def crear_pedido(
 @router.patch("/{pedido_id}/estado", response_model=PedidoResponse)
 def actualizar_estado_pedido(
     datos: PedidoEstadoUpdate,
+    admin_user: Annotated[object, Depends(require_admin)],
     pedido_id: int = Path(gt=0),
     service: PedidoService = Depends(get_pedido_service),
 ):
     """Actualiza el estado de un pedido existente."""
+    _ = admin_user
     try:
         return service.cambiar_estado(pedido_id, datos.estado)
     except ValueError as error:
@@ -57,12 +66,15 @@ def actualizar_estado_pedido(
         )
         raise HTTPException(status_code=status_code, detail=detail) from error
 
+
 @router.get("/{pedido_id}", response_model=PedidoResponse)
 def obtener_pedido(
+    admin_user: Annotated[object, Depends(require_admin)],
     pedido_id: int = Path(gt=0),
     service: PedidoService = Depends(get_pedido_service),
 ):
     """Busca y retorna un pedido por su identificador."""
+    _ = admin_user
     pedido = service.buscar_pedido_por_id(pedido_id)
     if not pedido:
         raise HTTPException(
