@@ -1,6 +1,9 @@
-"""Repositorio que maneja la persistencia de usuarios en PostgreSQL."""
+"""Repositorio de usuarios implementado con SQLAlchemy ORM."""
+
+from sqlalchemy import exists, select
 
 from database.connection import managed_connection
+from database.orm_models import UsuarioORM
 from models.usuario import Usuario
 
 
@@ -9,109 +12,69 @@ class UsuarioRepository:
 
     def guardar(self, usuario, connection=None):
         """Inserta un usuario y actualiza su id persistente."""
-        with managed_connection(connection) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO usuarios (username, email, hashed_password, role, activo)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        usuario.username,
-                        usuario.email,
-                        usuario.hashed_password,
-                        usuario.role,
-                        usuario.activo,
-                    ),
-                )
-                usuario._id = cursor.fetchone()[0]
+        with managed_connection(connection) as session:
+            orm_usuario = UsuarioORM(
+                username=usuario.username,
+                email=usuario.email,
+                hashed_password=usuario.hashed_password,
+                role=usuario.role,
+                activo=usuario.activo,
+            )
+            session.add(orm_usuario)
+            session.flush()
+            usuario._id = orm_usuario.id
         return usuario
 
     def buscar_por_username(self, username, connection=None):
         """Busca y retorna un usuario por username."""
-        with managed_connection(connection) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, username, email, hashed_password, role, activo
-                    FROM usuarios
-                    WHERE username = %s
-                    """,
-                    (username,),
-                )
-                fila = cursor.fetchone()
+        with managed_connection(connection) as session:
+            fila = session.scalar(
+                select(UsuarioORM).where(UsuarioORM.username == username)
+            )
         return self._build_usuario(fila)
 
     def buscar_por_email(self, email, connection=None):
         """Busca y retorna un usuario por correo."""
-        with managed_connection(connection) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, username, email, hashed_password, role, activo
-                    FROM usuarios
-                    WHERE email = %s
-                    """,
-                    (email,),
-                )
-                fila = cursor.fetchone()
+        with managed_connection(connection) as session:
+            fila = session.scalar(select(UsuarioORM).where(UsuarioORM.email == email))
         return self._build_usuario(fila)
 
     def buscar_por_id(self, user_id, connection=None):
         """Busca y retorna un usuario por id."""
-        with managed_connection(connection) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, username, email, hashed_password, role, activo
-                    FROM usuarios
-                    WHERE id = %s
-                    """,
-                    (user_id,),
-                )
-                fila = cursor.fetchone()
+        with managed_connection(connection) as session:
+            fila = session.get(UsuarioORM, user_id)
         return self._build_usuario(fila)
 
     def obtener_todos(self, connection=None):
         """Retorna la lista completa de usuarios."""
-        with managed_connection(connection) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT id, username, email, hashed_password, role, activo
-                    FROM usuarios
-                    ORDER BY id
-                    """
-                )
-                filas = cursor.fetchall()
+        with managed_connection(connection) as session:
+            filas = session.scalars(select(UsuarioORM).order_by(UsuarioORM.id)).all()
         return [self._build_usuario(fila) for fila in filas]
 
     def existe_admin_activo(self, connection=None):
         """Indica si ya existe al menos un usuario administrador activo."""
-        with managed_connection(connection) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT EXISTS(
-                        SELECT 1
-                        FROM usuarios
-                        WHERE role = 'admin' AND activo = TRUE
+        with managed_connection(connection) as session:
+            return bool(
+                session.scalar(
+                    select(
+                        exists().where(
+                            UsuarioORM.role == "admin",
+                            UsuarioORM.activo.is_(True),
+                        )
                     )
-                    """
                 )
-                return cursor.fetchone()[0]
+            )
 
     @staticmethod
     def _build_usuario(fila):
-        """Reconstruye un usuario a partir de una fila de PostgreSQL."""
+        """Reconstruye un usuario a partir de una fila persistida."""
         if not fila:
             return None
         return Usuario(
-            username=fila[1],
-            email=fila[2],
-            hashed_password=fila[3],
-            role=fila[4],
-            activo=fila[5],
-            user_id=fila[0],
+            username=fila.username,
+            email=fila.email,
+            hashed_password=fila.hashed_password,
+            role=fila.role,
+            activo=fila.activo,
+            user_id=fila.id,
         )

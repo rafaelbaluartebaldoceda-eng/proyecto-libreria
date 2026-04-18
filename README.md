@@ -1,13 +1,15 @@
 # Sistema de Gestion de Libreria
 
 ## Descripcion
-Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas, pedidos y usuarios autenticables en una libreria. El sistema mantiene una interfaz CLI y una API REST construida con FastAPI, trabajando sobre PostgreSQL, validaciones de dominio, autenticacion con JWT y separacion por capas.
+Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas, pedidos y usuarios autenticables en una libreria. El sistema mantiene una interfaz CLI y una API REST construida con FastAPI, trabajando sobre PostgreSQL, validaciones de dominio, autenticacion con JWT, persistencia con SQLAlchemy y versionado de esquema con Alembic.
 
 ## Tecnologias
 - Python 3
 - PostgreSQL 17+
 - FastAPI
 - Uvicorn
+- SQLAlchemy 2.x
+- Alembic
 - psycopg2-binary
 - python-jose
 - pwdlib + argon2-cffi
@@ -16,8 +18,9 @@ Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas,
 ## Arquitectura actual
 - `models/`: entidades del dominio y validaciones
 - `services/`: logica de negocio reutilizable
-- `repositories/`: acceso a datos con SQL
-- `database/`: manejo de conexiones y transacciones
+- `repositories/`: acceso a datos con SQLAlchemy ORM
+- `database/`: engine, sesiones SQLAlchemy y metadata ORM
+- `alembic/`: migraciones versionadas del esquema
 - `main.py`: interfaz CLI y flujo de consola
 - `app/`: capa HTTP con FastAPI, routers, schemas, dependencias y seguridad
 - `tests/`: pruebas automaticas de dominio, servicios y API
@@ -27,6 +30,7 @@ Proyecto backend desarrollado en Python para gestionar libros, clientes, ventas,
 - Fase 2 completada: migracion a PostgreSQL y cierre tecnico del backend base
 - Fase 3 completada: integracion base de FastAPI reutilizando la capa de servicios
 - Fase 4A completada: autenticacion, autorizacion por rol y proteccion de rutas con JWT
+- Fase 4B completada: migracion de persistencia a SQLAlchemy ORM y gobierno del esquema con Alembic
 
 La version actual fue validada localmente con **49 pruebas automaticas en estado OK**.
 
@@ -54,51 +58,9 @@ ADMIN_BOOTSTRAP_TOKEN=crea_un_token_unico_y_largo_para_el_primer_admin
 ## Esquema de base de datos
 ```sql
 CREATE DATABASE libreria;
-
-CREATE TABLE libros (
-    id INTEGER PRIMARY KEY,
-    titulo VARCHAR(100) NOT NULL,
-    autor VARCHAR(100) NOT NULL,
-    categoria VARCHAR(50) NOT NULL,
-    precio INTEGER NOT NULL,
-    stock INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE TABLE clientes (
-    dni CHAR(8) PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    correo VARCHAR(100) NOT NULL,
-    direccion VARCHAR(150) NOT NULL,
-    frecuente BOOLEAN NOT NULL DEFAULT FALSE
-);
-
-CREATE TABLE ventas (
-    id SERIAL PRIMARY KEY,
-    libro_id INTEGER NOT NULL REFERENCES libros(id),
-    cliente_dni CHAR(8) NOT NULL REFERENCES clientes(dni),
-    cantidad INTEGER NOT NULL,
-    fecha TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE pedidos (
-    id SERIAL PRIMARY KEY,
-    libro_id INTEGER NOT NULL REFERENCES libros(id),
-    cliente_dni CHAR(8) NOT NULL REFERENCES clientes(dni),
-    cantidad INTEGER NOT NULL,
-    metodo_entrega VARCHAR(20) NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
-    fecha TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE usuarios (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    hashed_password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'user',
-    activo BOOLEAN NOT NULL DEFAULT TRUE
-);
 ```
+
+El esquema ya no se recomienda mantener a mano. A partir de esta fase, la fuente oficial del esquema es Alembic.
 
 ## Como ejecutar la CLI
 ```bash
@@ -114,6 +76,27 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 - `http://127.0.0.1:8000/docs`
 - `http://127.0.0.1:8000/redoc`
 
+## Migraciones con Alembic
+Aplicar la ultima migracion:
+
+```bash
+alembic upgrade head
+```
+
+Ver historial de migraciones:
+
+```bash
+alembic history
+```
+
+Crear una nueva migracion:
+
+```bash
+alembic revision -m "descripcion_del_cambio"
+```
+
+La migracion inicial ya fue validada contra PostgreSQL local y deja el esquema alineado con los modelos ORM del proyecto.
+
 ## Flujo de seguridad
 - `POST /auth/bootstrap-admin`: crea el primer administrador usando `ADMIN_BOOTSTRAP_TOKEN`. Solo funciona si aun no existe un admin activo.
 - `POST /auth/register`: registra un usuario comun con rol `user`.
@@ -127,6 +110,7 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 - Las rutas protegidas devuelven `401` si el token falta o es invalido.
 - Las rutas administrativas devuelven `403` si el usuario autenticado no es admin.
 - El bootstrap del primer admin se bloquea automaticamente cuando ya existe un administrador activo.
+- La capa ORM conserva transacciones explicitas por operacion para evitar escrituras parciales.
 
 ## Recursos API disponibles
 
@@ -163,6 +147,8 @@ Una vez levantada la API, la documentacion interactiva estara disponible en:
 - Validacion de contrasenas con longitud minima, letras y numeros
 - Validacion de tokens JWT firmados y con expiracion
 - Proteccion de rutas con dependencias de FastAPI (`get_current_user`, `require_admin`)
+- Constraints a nivel de base de datos modelados con SQLAlchemy y versionados con Alembic
+- Repositories migrados a SQLAlchemy ORM sin romper la capa de servicios existente
 
 ## Ejecutar pruebas
 ```bash
@@ -170,4 +156,4 @@ python -m unittest discover -s tests -v
 ```
 
 ## Objetivo de aprendizaje
-Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. Con la Fase 4A cerrada, la siguiente etapa prevista es profundizar la capa de persistencia y evolucionar el acceso a datos con herramientas mas avanzadas como ORM y migraciones.
+Este proyecto forma parte de mi proceso de crecimiento como desarrollador backend. Con la Fase 4 ya integrada a nivel de seguridad, ORM y migraciones, la siguiente etapa prevista es profundizar la evolucion del producto con relaciones de dominio mas finas, ownership entre usuarios y clientes, y mejoras de observabilidad o despliegue.

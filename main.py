@@ -1,4 +1,4 @@
-import psycopg2
+from sqlalchemy.exc import SQLAlchemyError
 
 from repositories.cliente_repository import ClienteRepository
 from repositories.libro_repository import LibroRepository
@@ -208,7 +208,7 @@ def main():
     except ValueError as error:
         print(f"Error de configuracion: {error}")
         return
-    except psycopg2.Error as error:
+    except SQLAlchemyError as error:
         print(f"Error de base de datos: {error}")
         return
 
